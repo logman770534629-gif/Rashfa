@@ -1,0 +1,29 @@
+{
+    admin off
+    auto_https off
+    persist_config off
+}
+
+:{$PORT:80} {
+    root * /app/public
+    encode zstd gzip
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        X-Robots-Tag "noindex, nofollow, noarchive"
+        -Server
+    }
+
+    @private path /.env* /.git/* /storage/.*
+    respond @private 404
+
+    @build path /build/assets/*
+    header @build Cache-Control "public, max-age=31536000, immutable"
+
+    # Prevent caching HTML, session responses or localized pages at the CDN.
+    @dynamic not path /build/* /media/* /storage/* /favicon.ico /robots.txt
+    header @dynamic Cache-Control "private, no-store"
+
+    php_server
+}
